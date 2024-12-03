@@ -12,12 +12,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// mongoose.connect('mongodb://localhost:27017/blogApp', {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+// }).then(() => console.log('MongoDB connected')).catch(err => console.log(err));
+
+// Route to fetch all posts
+
 mongoose.connect('mongodb://localhost:27017/blogApp', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('MongoDB connected')).catch(err => console.log(err));
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
 
-// Route to fetch all posts
 app.get('/api/posts', async (req, res) => {
   try {
     const posts = await Post.find().populate('comments');
@@ -37,6 +44,45 @@ app.get('/api/posts/:id', async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+  // Get Recent Posts with Comment Count (Aggregation)
+
+app.get('/api/recent-posts', async (req, res) => {
+  try {
+    const posts = await Post.aggregate([
+      {
+        $lookup: {
+          from: 'comments', // Collection name in MongoDB
+          localField: '_id',
+          foreignField: 'post',
+          as: 'comments'
+        }
+      },
+      {
+        $addFields: {
+          commentCount: { $size: "$comments" }
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $project: {
+          title: 1,
+          content: 1,
+          author: 1,
+          createdAt: 1,
+          commentCount: 1
+        }
+      }
+    ]);
+    console.log(posts);
+    res.json(posts);
+  } catch (err) {
+    console.error('Error fetching recent posts:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 
 // Route to create a new post
 app.post('/api/posts', async (req, res) => {

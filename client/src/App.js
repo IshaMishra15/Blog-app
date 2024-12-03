@@ -5,6 +5,7 @@ import PostList from './components/PostList';
 import EditPost from './components/EditPost';
 import CreatePost from './components/CreatePost';
 import './App.css'
+import RecentPosts from './components/RecentPosts';
 function App() {
   return (
     <Router>
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<PostList />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/edit/:id" element={<EditPost />} />
+          <Route path="/recent-posts" element={<RecentPosts/>}/>
         </Routes>
       </div>
     </Router>
